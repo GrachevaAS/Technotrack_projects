@@ -1,30 +1,28 @@
-#pragma once
+#ifndef H_STACK
+#define H_STACK
+
 template <class T>
 class Stack {
 public:
 	Stack();
 	~Stack();
-	T push(T value);
+	using value_type = T;
+	using size_type = size_t;
+	//using reference = T&;
+	//using const_reference = const T&;
+
+	void push(value_type value);
 	void pop();
-	T top();
-	bool empty();
-	int size();
-
+	value_type top() const;
+	bool empty() const;
+	size_type size() const;
 private:
-	T* container;
-};
+	static const int initialSize = 4;
+	size_type bufferSize;
+	value_type* buffer;
+	size_type currentSize;
+	value_type* resizeBuffer(value_type* buffer);
+	void is_OK();
+}; #pragma once
 
-template <class T>
-T Stack::push(int value) {
-
-}
-
-template <class T>
-void Stack::pop() {
-
-}
-
-template <class T>
-int Stack::top() {
-
-}
+#endif
