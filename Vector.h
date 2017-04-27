@@ -1,9 +1,19 @@
 #ifndef H_VECTOR
 #define H_VECTOR
 
-#define DEBUG
+// #define DEBUG
+
 #include <assert.h>
+#include <algorithm>
 #include <iostream>
+
+//void *operator new[](size_t size) {
+//	//char* tmp = (char*)malloc(size);
+//	for (size_t i = 0; i < size; i++) {
+//		tmp[i] = 0;
+//	}
+//	return static_cast<void*>(tmp);
+//}
 
 template <class T>
 class Vector {
@@ -19,10 +29,11 @@ public:
 
 	Vector();
 	explicit Vector(size_type size);
-	//Vector(const Vector<T>& another) = delete;
+	// Vector(const Vector<T>& another) = delete;
 	Vector(const Vector<T>& another);
 	~Vector();
 	//Vector<T>& operator=(const Vector<T>& another) = delete;
+	void swap(Vector<T>& another) noexcept;
 	Vector<T>& operator=(const Vector<T>& another);
 	reference operator[](size_type pos);
 	reference at(size_type pos);
@@ -31,8 +42,9 @@ public:
 	bool empty() const;
 	size_type size() const;
 	size_type capacity() const;
-	bool reserve(size_type new_cap);
-	bool resize(size_type count, const value_type& value);
+	void reserve(size_type new_cap);
+	void resize(size_type count);
+	void resize(size_type count, const value_type& value);
 	void clear();
 	void push_back(const T& value);
 	void pop_back();
@@ -40,6 +52,7 @@ public:
 	iterator end();
 	iterator cbegin() const;
 	iterator cend() const;
+	void DUMP();
 
 private:
 	static const size_type initSize = 4;
@@ -47,12 +60,12 @@ private:
 	size_type bufferSize;
 	size_type elementsCount;
 	void is_OK() const;
-	void DUMP();
+	//void DUMP();
 };
 
 template <class T>
 Vector<T>::Vector() : bufferSize(initSize), elementsCount(0) {
-	std::cout << "call constructor\n";
+	std::cout << "call constructor, this: " << this << "\n";
 	try {
 		buffer = new value_type[bufferSize];
         #ifdef DEBUG
@@ -68,7 +81,7 @@ Vector<T>::Vector() : bufferSize(initSize), elementsCount(0) {
 
 template <class T>
 Vector<T>::Vector(size_type size) : bufferSize(size), elementsCount(0) {
-	std::cout << "call constructor with size\n";
+	std::cout << "call constructor with size this: " << this << "\n";
 	if (size < initSize)
 		bufferSize = initSize;
 	try {
@@ -85,67 +98,59 @@ Vector<T>::Vector(size_type size) : bufferSize(size), elementsCount(0) {
 }
 
 template <class T>
-Vector<T>::Vector(const Vector<T>& another) : bufferSize(4), elementsCount(0) {
-	std::cout << "call COPYING constructor\n";
-	bufferSize = another.capacity();
-	elementsCount = another.size();
-	try {
-		buffer = new value_type[bufferSize];
-		size_type i = 0;
-		for (iterator it = another.cbegin(); it != another.cend() && i < elementsCount; it++) {
-			buffer[i] = (*it);
-			i++;
-		}
-        #ifdef DEBUG
-		    std::cout << "INIT VECTOR\n";
-		    DUMP();
-        #endif
-	}
-	catch (std::bad_alloc &e) {
-		std::cout << "allocation failed\n";
-		throw e;
-	}
-}
-
-template <class T>
 Vector<T>::~Vector() {
 	std::cout << "call destructor, this: " << this << "\n";
 	is_OK();
-	DUMP();
-	std::cout << "deletion address: " << buffer << "\n";
+	#ifdef DEBUG
+		DUMP();
+	#endif		
 	delete[] buffer;
 	#ifdef DEBUG
-	std::cout << "VECTOR DELETED\n";
+	    std::cout << "VECTOR DELETED\n" << "deletion address: " << buffer << "\n";
 	#endif
+}
+
+// -----copy-and-swap
+
+template <class T>
+Vector<T>::Vector(const Vector<T>& another) : bufferSize(4), elementsCount(0) {
+	std::cout << "call COPYING constructor, this: " << this << "\n";
+	bufferSize = another.capacity();
+	elementsCount = another.size();
+	buffer = new value_type[bufferSize];
+	size_type i = 0;
+	for (iterator it = another.cbegin(); it != another.cend() && i < elementsCount; it++) {
+			buffer[i] = (*it);
+			i++;
+		}
+    #ifdef DEBUG
+		std::cout << "INIT VECTOR\n";
+		DUMP();
+    #endif
+}
+
+template <class T>
+void Vector<T>::swap(Vector<T>& another) noexcept {
+	for (size_t it = 0; it < size(); it++) {
+		std::swap(at(it), another.at(it));
+	}
 }
 
 template <class T>
 Vector<T>& Vector<T>::operator=(const Vector<T>& another) {
 	std::cout << "assignment operator\n";
 	is_OK();
-	if (bufferSize < another.size()) {
-		try {
-			if (!reserve(another.size()))
-				throw (bufferSize);
-			bufferSize = another.capacity();
-			elementsCount = another.size();
-		}
-		catch (size_type &e) {
-			std::cout << "error: not enough memory. Only the first " << e << " items will be copied\n";
-			elementsCount = bufferSize;
-		}
-	}
-	else {
-		elementsCount = another.size();
-	}
-	size_type i = 0;
-	for (iterator it = another.cbegin(); it != another.cend() && i < elementsCount; it++) {
-		buffer[i] = (*it);
-		i++;
-	}
-	// DUMP();
+	reserve(another.capacity());
+	resize(another.size());
+	Vector<T> temp(another);
+	this->swap(temp);
+	std::cout << "swap " << this << " (this) and " << &temp << "\n";
+	DUMP();
 	return *this;
 }
+
+// -------------------------------------
+
 template <class T>
 typename Vector<T>::reference Vector<T>::operator[](size_type pos) {
 	is_OK();
@@ -168,7 +173,7 @@ typename Vector<T>::reference Vector<T>::at(size_type pos) {
 
 template <class T>
 typename Vector<T>::reference Vector<T>::front() {
-	std::cout << "call front\n";
+	// std::cout << "call front\n";
 	is_OK();
 	try {
 		if (elementsCount == 0)
@@ -183,7 +188,7 @@ typename Vector<T>::reference Vector<T>::front() {
 
 template <class T>
 typename Vector<T>::reference Vector<T>::back() {
-	std::cout << "call back\n";
+	// std::cout << "call back\n";
 	is_OK();
 	try {
 		if (elementsCount == 0)
@@ -215,76 +220,82 @@ typename Vector<T>::size_type Vector<T>::capacity() const {
 }
 
 template <class T>
-bool Vector<T>::reserve(size_type new_cap) {
-	std::cout << "call reserve!\n";
+void Vector<T>::reserve(size_type new_cap) {
+	// std::cout << "call reserve!\n";
 	is_OK();
 	if (new_cap <= bufferSize)
-		return true;
-	try {
-		value_type* bufferCopy = new value_type[new_cap];
-		for (size_type i = 0; i < bufferSize; i++) {
-			bufferCopy[i] = buffer[i];
-		}
-		delete[] buffer;
-		buffer = bufferCopy;
-		bufferSize = new_cap;
-		DUMP();
-		return true;
+		return;
+	value_type* bufferCopy = new value_type[new_cap];
+	for (size_type i = 0; i < bufferSize; i++) {
+		bufferCopy[i] = buffer[i];
 	}
-	catch (std::bad_alloc) {
-		std::cout << "error: allocation failed\n"; 
-		return false;
-	}
+	delete[] buffer;
+	buffer = bufferCopy;
+	bufferSize = new_cap;
+    #ifdef DEBUG
+	    DUMP();
+    #endif
 }
 
 template <class T>
-bool Vector<T>::resize(size_type count, const value_type& value) {
-	std::cout << "call resize!\n";
+void Vector<T>::resize(size_type count) {
+	// std::cout << "call resize!\n";
+	is_OK();
+	if (count <= bufferSize) {
+		elementsCount = count;
+		return;
+	}
+	size_type countToReserve = count < bufferSize * 2 ? bufferSize * 2 : count;
+	reserve(countToReserve);
+	elementsCount = count;
+    #ifdef DEBUG
+	     DUMP();
+    #endif		
+}
+
+template <class T>
+void Vector<T>::resize(size_type count, const value_type& value) {
+	// std::cout << "call resize!\n";
 	is_OK();
 	if (count <= bufferSize) {
 		elementsCount = count;
 		return true;
+	}	
+	size_type countToReserve = count < bufferSize * 2 ? bufferSize * 2 : count;
+	if (!reserve(countToReserve))
+		throw (-1);
+	for (size_type i = elementsCount; i < count; i++) {
+		buffer[i] = value;
 	}
-	try {
-		size_type countToReserve = count < bufferSize * 2 ? bufferSize * 2 : count;
-		if (!reserve(countToReserve))
-			throw (-1);
-		for (size_type i = elementsCount; i < count; i++) {
-			buffer[i] = value;
-		}
-		elementsCount = count;
-		DUMP();
-		return true;
-	}
-	catch (int) {
-		std::cout << "error: resize is impossible\n";
-		return false;
-	}
+	elementsCount = count;
+    #ifdef DEBUG
+	    DUMP();
+    #endif	
 }
 
 template <class T>
 void Vector<T>::clear() {
-	std::cout << "call clear\n";
 	is_OK();
 	elementsCount = 0;
-	//DUMP();
 }
 
 template <class T>
 void Vector<T>::push_back(const T& value) {
-	std::cout << "push back ";
+    #ifdef DEBUG
+	    std::cout << "push back " << value << "\n";
+	#endif
 	is_OK();
 	if (elementsCount + 1 > bufferSize) {
 		try {
-			if(!reserve(bufferSize * 2))
-				throw(-1);
-		} catch(int) {
+			reserve(bufferSize * 2);
+		} catch(std::bad_alloc &e) {
 			std::cout << "error: reached memory limit\n";
+			DUMP();
+			throw e;
 		}
 	}
 	buffer[elementsCount] = value;
 	elementsCount++;
-	std::cout << value << "\n";
 }
 
 template <class T>
@@ -292,8 +303,10 @@ void Vector<T>::pop_back() {
 	std::cout << "call pop back\n";
 	is_OK();
 	try {
-		if (elementsCount == 0)
+		if (elementsCount == 0) {
 			throw(-1);
+			DUMP();
+		}
 		elementsCount--;
 	}
 	catch (int) {
@@ -341,7 +354,7 @@ void Vector<T>::DUMP() {
 	std::cout << "capacity = " << capacity() << "\n";
 	std::cout << size() << " elements, " << empty() << " empty\n";
 	if (!empty()) {
-		std::cout << "Front: " << front() << "\nBack: " << back() << "\n";
+		// std::cout << "Front: " << front() << "\nBack: " << back() << "\n";
 		for (iterator it = begin(); it != end(); it++) {
 			std::cout << (*it) << " ";
 		}
