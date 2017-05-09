@@ -7,14 +7,6 @@
 #include <algorithm>
 #include <iostream>
 
-//void *operator new[](size_t size) {
-//	//char* tmp = (char*)malloc(size);
-//	for (size_t i = 0; i < size; i++) {
-//		tmp[i] = 0;
-//	}
-//	return static_cast<void*>(tmp);
-//}
-
 template <class T>
 class Vector {
 public:
@@ -29,10 +21,8 @@ public:
 
 	Vector();
 	explicit Vector(size_type size);
-	// Vector(const Vector<T>& another) = delete;
 	Vector(const Vector<T>& another);
 	~Vector();
-	//Vector<T>& operator=(const Vector<T>& another) = delete;
 	void swap(Vector<T>& another) noexcept;
 	Vector<T>& operator=(const Vector<T>& another);
 	reference operator[](size_type pos);
@@ -60,12 +50,11 @@ private:
 	size_type bufferSize;
 	size_type elementsCount;
 	void is_OK() const;
-	//void DUMP();
+	void DUMP();
 };
 
 template <class T>
 Vector<T>::Vector() : bufferSize(initSize), elementsCount(0) {
-	std::cout << "call constructor, this: " << this << "\n";
 	try {
 		buffer = new value_type[bufferSize];
         #ifdef DEBUG
@@ -81,7 +70,6 @@ Vector<T>::Vector() : bufferSize(initSize), elementsCount(0) {
 
 template <class T>
 Vector<T>::Vector(size_type size) : bufferSize(size), elementsCount(0) {
-	std::cout << "call constructor with size this: " << this << "\n";
 	if (size < initSize)
 		bufferSize = initSize;
 	try {
@@ -99,7 +87,6 @@ Vector<T>::Vector(size_type size) : bufferSize(size), elementsCount(0) {
 
 template <class T>
 Vector<T>::~Vector() {
-	std::cout << "call destructor, this: " << this << "\n";
 	is_OK();
 	#ifdef DEBUG
 		DUMP();
@@ -111,7 +98,7 @@ Vector<T>::~Vector() {
 }
 
 template <class T>
-Vector<T>::Vector(const Vector<T>& another) : bufferSize(4), elementsCount(0) {
+Vector<T>::Vector(const Vector<T>& another) : bufferSize(initSize), elementsCount(0) {
 	bufferSize = another.capacity();
 	elementsCount = another.size();
 	buffer = new value_type[bufferSize];
@@ -135,7 +122,6 @@ void Vector<T>::swap(Vector<T>& another) noexcept {
 
 template <class T>
 Vector<T>& Vector<T>::operator=(const Vector<T>& another) {
-	std::cout << "assignment operator\n";
 	is_OK();
 	reserve(another.capacity());
 	resize(another.size());
@@ -182,7 +168,6 @@ typename Vector<T>::reference Vector<T>::front() {
 
 template <class T>
 typename Vector<T>::reference Vector<T>::back() {
-	// std::cout << "call back\n";
 	is_OK();
 	try {
 		if (elementsCount == 0)
@@ -215,7 +200,6 @@ typename Vector<T>::size_type Vector<T>::capacity() const {
 
 template <class T>
 void Vector<T>::reserve(size_type new_cap) {
-	// std::cout << "call reserve!\n";
 	is_OK();
 	if (new_cap <= bufferSize)
 		return;
@@ -233,7 +217,6 @@ void Vector<T>::reserve(size_type new_cap) {
 
 template <class T>
 void Vector<T>::resize(size_type count) {
-	// std::cout << "call resize!\n";
 	is_OK();
 	if (count <= bufferSize) {
 		elementsCount = count;
@@ -249,7 +232,6 @@ void Vector<T>::resize(size_type count) {
 
 template <class T>
 void Vector<T>::resize(size_type count, const value_type& value) {
-	// std::cout << "call resize!\n";
 	is_OK();
 	if (count <= bufferSize) {
 		elementsCount = count;
@@ -348,7 +330,6 @@ void Vector<T>::DUMP() {
 	std::cout << "capacity = " << capacity() << "\n";
 	std::cout << size() << " elements, " << empty() << " empty\n";
 	if (!empty()) {
-		// std::cout << "Front: " << front() << "\nBack: " << back() << "\n";
 		for (iterator it = begin(); it != end(); it++) {
 			std::cout << (*it) << " ";
 		}
