@@ -98,12 +98,6 @@ Array<T, Size>& Array<T, Size>::operator=(Array<T, Size>& another) {
 	Array<T, Size> temp(another);
 	this->swap(temp);
 	return *this;
-	/*int i = 0;
-	for (iterator it = another.begin(); it != another.end(); it++) {
-		buffer[i] = (*it);
-		i++;
-	}
-	return *this;*/
 }
 
 template <class T, std::size_t Size>

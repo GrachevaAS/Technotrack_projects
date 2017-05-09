@@ -110,11 +110,8 @@ Vector<T>::~Vector() {
 	#endif
 }
 
-// -----copy-and-swap
-
 template <class T>
 Vector<T>::Vector(const Vector<T>& another) : bufferSize(4), elementsCount(0) {
-	std::cout << "call COPYING constructor, this: " << this << "\n";
 	bufferSize = another.capacity();
 	elementsCount = another.size();
 	buffer = new value_type[bufferSize];
@@ -144,8 +141,6 @@ Vector<T>& Vector<T>::operator=(const Vector<T>& another) {
 	resize(another.size());
 	Vector<T> temp(another);
 	this->swap(temp);
-	std::cout << "swap " << this << " (this) and " << &temp << "\n";
-	DUMP();
 	return *this;
 }
 
@@ -173,7 +168,6 @@ typename Vector<T>::reference Vector<T>::at(size_type pos) {
 
 template <class T>
 typename Vector<T>::reference Vector<T>::front() {
-	// std::cout << "call front\n";
 	is_OK();
 	try {
 		if (elementsCount == 0)
