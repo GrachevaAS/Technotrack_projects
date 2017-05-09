@@ -9,6 +9,15 @@ void copyTest(Vector<T> vectorValue) {
 }
 
 int main() {
+	Stack<int> myStack;
+	for (int i = 0; i < 5; i++) {
+		myStack.push(i * 10);
+		std::cout << myStack.top() << " ";
+	}
+	std::cout << "\n";
+	while (!myStack.empty()) {
+		myStack.pop();
+	}
 	Vector<int> myVector;
 	for (int i = 0; i < 7; i++)
 		myVector.push_back(i*i);
